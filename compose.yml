@@ -1,0 +1,56 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: nextcloud-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mariadb_data:/var/lib/mysql
+    networks:
+      - traefik-net
+
+  app:
+    image: nextcloud:latest
+    container_name: nextcloud-app
+    restart: always
+    volumes:
+      - ./nextcloud_data:/var/www/html
+    environment:
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_HOST: db
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NEXTCLOUD_TRUSTED_DOMAINS}
+      OVERWRITECLIURL: ${OVERWRITECLIURL}
+      OVERWRITEPROTOCOL: ${OVERWRITEPROTOCOL}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_TRUSTED_DOMAINS}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls.certresolver=myresolver"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      # Configuration pour rediriger HTTP vers HTTPS
+      - "traefik.http.routers.nextcloud-http.rule=Host(`${NEXTCLOUD_TRUSTED_DOMAINS}`)"
+      - "traefik.http.routers.nextcloud-http.entrypoints=web"
+      - "traefik.http.routers.nextcloud-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    depends_on:
+      - db
+    networks:
+      - traefik-net
+
+volumes:
+  db_data:
+  nextcloud_data:
+
+
+networks:
+  traefik-net:
+    external: true
