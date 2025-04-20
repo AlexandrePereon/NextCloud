@@ -1,3 +1,4 @@
 /mariadb_data
 /nextcloud_data
+/redis_data
 .env
