@@ -24,7 +24,7 @@ services:
 
 
   app:
-    image: nextcloud:latest
+    image: nextcloud-custom:latest
     container_name: nextcloud-app
     restart: always
     volumes:
@@ -41,6 +41,7 @@ services:
       OVERWRITEPROTOCOL: ${OVERWRITEPROTOCOL}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES}
       REDIS_HOST: redis
+      PHP_MEMORY_LIMIT: 4096M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_TRUSTED_DOMAINS}`)"
